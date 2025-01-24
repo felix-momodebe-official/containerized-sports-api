@@ -27,6 +27,5 @@ jobs:
          java --version
          javac --version
 
-     - name: Output Text
-       run: Echo Your pielien is a success
+     
          
