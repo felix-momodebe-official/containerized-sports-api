@@ -7,7 +7,10 @@ on:
 
 jobs:
  prepare-server:
-   runs-on: self-hosted
+   strategy:
+     matrix:
+       runs-on: [ubuntu-latest, self-hosted, macos-latest]
+   runs-on: ${{ matrix.runs-on }}
    steps:
      - uses: actions/checkout@v4
 
