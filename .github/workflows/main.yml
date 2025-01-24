@@ -39,6 +39,12 @@ jobs:
        
        # Install Docker CE
        sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+
+        # Enable User Acess
+       sudo usermod -aG docker $USER
+
+        # Enable User
+       newgrp docker
        
        # Verify Docker installation
        docker --version
