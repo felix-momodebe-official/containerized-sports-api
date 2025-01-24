@@ -1,71 +1,81 @@
 name: Server Setup and Docker Image CI
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+ push:
+   branches: [ "main" ]
+ pull_request:
+   branches: [ "main" ]
 
 jobs:
-  system-update:
-    runs-on: self-hosted
-    steps:
-    - name: Update Ubuntu Server
-      run: |
-        sudo apt update
-        sudo apt upgrade -y
+ system-update:
+   runs-on: self-hosted
+   steps:
+   - name: Update Ubuntu Server
+     run: |
+       sudo apt update
+       sudo apt upgrade -y
 
-  java-install:
-    runs-on: self-hosted
-    steps:
-    - name: Install Java 17
-      run: |
-        sudo apt install -y openjdk-17-jdk
+ java-install:
+   needs: [system-update]
+   runs-on: self-hosted
+   steps:
+   - name: Install Java 17
+     run: |
+       sudo apt install -y openjdk-17-jdk
 
-  trivy-install:
-    runs-on: self-hosted
-    steps:
-    - name: Install Trivy
-      run: |
-        wget https://github.com/aquasecurity/trivy/releases/download/v0.48.1/trivy_0.48.1_Linux-64bit.deb
-        sudo dpkg -i trivy_0.48.1_Linux-64bit.deb
+ trivy-install:
+   needs: [system-update, java-install]
+   runs-on: self-hosted
+   steps:
+   - name: Install Trivy
+     run: |
+       wget https://github.com/aquasecurity/trivy/releases/download/v0.48.1/trivy_0.48.1_Linux-64bit.deb
+       sudo dpkg -i trivy_0.48.1_Linux-64bit.deb
 
-  docker-setup:
-    runs-on: self-hosted
-    steps:
-    - name: Install Docker
-      run: |
-        sudo apt-get install -y docker.io
-        sudo usermod -aG docker $USER
-        newgrp docker
+ docker-setup:
+   needs: [system-update, java-install]
+   runs-on: self-hosted
+   steps:
+   - name: Install Docker
+     run: |
+       sudo apt-get install -y docker.io
+       sudo usermod -aG docker $USER
+       newgrp docker
 
-  code-scan:
-    runs-on: self-hosted
-    steps:
-    - uses: actions/checkout@v4
-    - name: Scan Code with Trivy
-      run: |
-        trivy fs --security-checks vuln,secret,config .
+ code-scan:
+   needs: [system-update, java-install, trivy-install]
+   runs-on: self-hosted
+   steps:
+   - uses: actions/checkout@v4
+   - name: Scan Code with Trivy
+     run: |
+       trivy fs --security-checks vuln,secret,config .
 
-  build-and-push:
-    needs: [system-update, java-install, trivy-install, docker-setup, code-scan]
-    runs-on: self-hosted
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Build Docker Image
-      run: |
-        docker build . --file Dockerfile --tag ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
+ build-image:
+   needs: [system-update, java-install, code-scan]
+   runs-on: self-hosted
+   steps:
+   - uses: actions/checkout@v4
+   - name: Build Docker Image
+     run: |
+       docker build . --file Dockerfile --tag ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
 
-    - name: Scan Docker Image with Trivy
-      run: |
-        trivy image --severity HIGH,CRITICAL ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
+ scan-image:
+   needs: [build-image]
+   runs-on: self-hosted
+   steps:
+   - name: Scan Docker Image with Trivy
+     run: |
+       trivy image --severity HIGH,CRITICAL ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
 
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: Push Docker Image
-      run: |
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
+ push-image:
+   needs: [scan-image]
+   runs-on: self-hosted
+   steps:
+   - name: Login to Docker Hub
+     uses: docker/login-action@v3
+     with:
+       username: ${{ secrets.DOCKERHUB_USERNAME }}
+       password: ${{ secrets.DOCKERHUB_TOKEN }}
+   - name: Push Docker Image
+     run: |
+       docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
