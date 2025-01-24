@@ -1,0 +1,32 @@
+name: Ubuntu EC2 Server Update & Java Install
+
+on:
+ push:
+   branches: [ "main" ]
+ workflow_dispatch:
+
+jobs:
+ prepare-server:
+   runs-on: self-hosted
+   steps:
+     - uses: actions/checkout@v4
+
+     - name: Update and Upgrade Server
+       run: |
+         sudo apt-get update
+         sudo apt-get upgrade -y
+
+     - name: Install Java 17
+       uses: actions/setup-java@v4
+       with:
+         distribution: 'temurin'
+         java-version: '17'
+
+     - name: Verify Java Installation
+       run: |
+         java --version
+         javac --version
+
+     - name: Output Text
+       run: Echo "Your pielien is a success"
+         
