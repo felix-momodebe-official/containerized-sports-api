@@ -15,6 +15,12 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Install & Configure Docker
+      run: |
+         sudo apt install docker.io -y
+         sudo usermod -aG docker $USER
+         newgrp docker
     
     - name: Build and push Docker image
       run: |
