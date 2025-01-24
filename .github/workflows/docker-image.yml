@@ -15,6 +15,7 @@ jobs:
         sudo apt upgrade -y
 
   java-install:
+    needs: [system-update]
     runs-on: self-hosted
     steps:
     - name: Install Java 17
@@ -46,26 +47,32 @@ jobs:
       run: |
         trivy fs --security-checks vuln,secret,config .
 
-  build-and-push:
-    needs: [system-update, java-install, trivy-install, docker-setup, code-scan]
+  build-image:
+    needs: [java-install, code-scan]
     runs-on: self-hosted
     steps:
     - uses: actions/checkout@v4
-    
     - name: Build Docker Image
       run: |
         docker build . --file Dockerfile --tag ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
 
+  scan-image:
+    needs: [build-image]
+    runs-on: self-hosted
+    steps:
     - name: Scan Docker Image with Trivy
       run: |
         trivy image --severity HIGH,CRITICAL ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
 
+  push-image:
+    needs: [scan-image]
+    runs-on: self-hosted
+    steps:
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-
     - name: Push Docker Image
       run: |
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
