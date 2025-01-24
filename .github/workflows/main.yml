@@ -39,15 +39,20 @@ jobs:
        
        # Install Docker CE
        sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-
-        # Enable User Acess
-       sudo usermod -aG docker $USER
-
-        # Enable User
-       newgrp docker
        
        # Verify Docker installation
        docker --version
+   
+   - name: Set Docker Socket Permissions
+     run: |
+       # Add current user to docker group
+       sudo usermod -aG docker $USER
+       
+       # Ensure docker group exists
+       sudo groupadd -f docker
+       
+       # Change docker socket permissions
+       sudo chmod 666 /var/run/docker.sock
    
    - name: Login to Docker Hub
      uses: docker/login-action@v3
