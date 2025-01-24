@@ -1,26 +1,57 @@
-name: Docker Image CI
+name: Server Setup and Docker Image CI
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+
 jobs:
-  build:
-    strategy:
-     matrix:
-       runs-on: [ubuntu-latest, self-hosted]
-    runs-on: ${{ matrix.runs-on }}
+  setup-and-build:
+    runs-on: self-hosted
     steps:
     - uses: actions/checkout@v4
-    
+
+    - name: Update Ubuntu Server
+      run: |
+        sudo apt update
+        sudo apt upgrade -y
+
+    - name: Install Java 17
+      run: |
+        sudo apt install -y openjdk-17-jdk
+
+    - name: Install Trivy
+      run: |
+        wget https://github.com/aquasecurity/trivy/releases/download/v0.48.1/trivy_0.48.1_Linux-64bit.deb
+        sudo dpkg -i trivy_0.48.1_Linux-64bit.deb
+
+    - name: Install Docker
+      run: |
+        sudo apt-get install -y docker.io
+
+    - name: Enable Docker Permissions
+      run: |
+        sudo usermod -aG docker $USER
+        newgrp docker
+
+    - name: Scan Code with Trivy
+      run: |
+        trivy fs --security-checks vuln,secret,config .
+
+    - name: Build Docker Image
+      run: |
+        docker build . --file Dockerfile --tag ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
+
+    - name: Scan Docker Image with Trivy
+      run: |
+        trivy image --severity HIGH,CRITICAL ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
+
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-    
-    - name: Build and push Docker image
+
+    - name: Push Docker Image
       run: |
-        IMAGE_TAG=$(date +%s)
-        docker build . --file Dockerfile --tag ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:$IMAGE_TAG
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:$IMAGE_TAG
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:${{ github.sha }}
