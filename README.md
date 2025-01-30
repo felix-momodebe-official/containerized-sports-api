@@ -130,7 +130,7 @@ docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/sports-api:sports-a
 - After deploying the ECS service, note the DNS name of the ALB (e.g., sports-api-alb-<AWS_ACCOUNT_ID>.us-east-1.elb.amazonaws.com)
 - Confirm the API is accessible by visiting the ALB DNS name in your browser and adding /sports at end (e.g, http://sports-api-alb-<AWS_ACCOUNT_ID>.us-east-1.elb.amazonaws.com/sports)
 
-
+![image](https://github.com/user-attachments/assets/9373bb57-890f-4d60-a9ba-4014f9824d97)
 
 
 ### **Configure API Gateway**
@@ -138,15 +138,21 @@ docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/sports-api:sports-a
 - Go to API Gateway Console → Create API → REST API
 - Name the API (e.g., Sports API Gateway)
 
+![image](https://github.com/user-attachments/assets/3e846401-4b04-41c1-9554-1e2d7a0b7dcf)
+
+
 2. Set Up Integration:
 - Create a resource /sports
 - Create a GET method
 - Choose HTTP Proxy as the integration type
-- Enter the DNS name of the ALB that includes "/sports" (e.g. http://sports-api-alb-<AWS_ACCOUNT_ID>.us-east-1.elb.amazonaws.com/sports
+- Enter the DNS name of the ALB that includes "/sports" (e.g. http://sports-api-alb-<AWS_ACCOUNT_ID>.us-east-1.elb.amazonaws.com/sports)
+
 
 3. Deploy the API:
 - Deploy the API to a stage (e.g., prod)
 - Note the endpoint URL
+
+![image](https://github.com/user-attachments/assets/14669c8b-e44b-4f68-87ab-923341f5bd02)
 
 ### **Test the System**
 - Use curl or a browser to test:
