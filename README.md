@@ -62,6 +62,9 @@ cd containerized-sports-api
 aws ecr create-repository --repository-name sports-api --region us-east-1
 ```
 
+![image](https://github.com/user-attachments/assets/b472be74-3db1-4668-886d-71d4e39c3dc9)
+
+
 ### **Authenticate Build and Push the Docker Image**
 ```bash
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
@@ -76,6 +79,9 @@ docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/sports-api:sports-a
 - Go to the ECS Console → Clusters → Create Cluster
 - Name your Cluster (sports-api-cluster)
 - For Infrastructure, select Fargate, then create Cluster
+
+![image](https://github.com/user-attachments/assets/98a37bab-319b-4169-8633-4d6a9dd206a3)
+
 
 2. Create a Task Definition:
 - Go to Task Definitions → Create New Task Definition
@@ -92,7 +98,11 @@ docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/sports-api:sports-a
   - Key: SPORTS_API_KEY
   - Value: <YOUR_SPORTSDATA.IO_API_KEY>
   - Create task definition
-3. Run the Service with an ALB
+ 
+ ![image](https://github.com/user-attachments/assets/9faa92ff-36bf-4c45-942b-308a88a7a9de)
+  
+
+3. Create the Service with an ALB
 - Go to Clusters → Select Cluster → Service → Create.
 - Capacity provider: Fargate
 - Select Deployment configuration family (sports-api-task)
@@ -108,9 +118,20 @@ docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/sports-api:sports-a
  - Name: sports-api-alb
  - Target Group health check path: "/sports"
  - Create service
+
+![image](https://github.com/user-attachments/assets/44d92a38-9edf-4427-ba39-9610a2237569)
+
+![image](https://github.com/user-attachments/assets/b820c3a2-eb85-4d27-9508-dc2c144b3452)
+
+![image](https://github.com/user-attachments/assets/a593dd39-5c2d-4b03-8446-3ab27e4d5d81)
+
+
 4. Test the ALB:
 - After deploying the ECS service, note the DNS name of the ALB (e.g., sports-api-alb-<AWS_ACCOUNT_ID>.us-east-1.elb.amazonaws.com)
 - Confirm the API is accessible by visiting the ALB DNS name in your browser and adding /sports at end (e.g, http://sports-api-alb-<AWS_ACCOUNT_ID>.us-east-1.elb.amazonaws.com/sports)
+
+
+
 
 ### **Configure API Gateway**
 1. Create a New REST API:
